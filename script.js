@@ -12,6 +12,10 @@ let shows = [];
 let episodesCache = {};
 let currentEpisodes = [];
 
+// Give select elements accessible labels
+showSelector.setAttribute("aria-label", "Select a show to view");
+episodeSelector.setAttribute("aria-label", "Select an episode to jump to");
+
 async function loadShows() {
   const res = await fetch("https://api.tvmaze.com/shows");
   shows = await res.json();
@@ -35,7 +39,9 @@ function renderShowList(list) {
     card.dataset.id = s.id;
     const genres = s.genres.join(" | ");
     card.innerHTML = `
-      <div><img src="${s.image ? s.image.medium : ""}"></div>
+      <div><img src="${s.image ? s.image.medium : ""}" alt="${
+      s.name
+    } poster"></div>
       <div>
         <h2 class="showTitle">${s.name}</h2>
         <p>${s.summary || ""}</p>
@@ -111,7 +117,9 @@ function renderEpisodes(list) {
       2,
       "0"
     )}</p>
-      <img src="${ep.image ? ep.image.medium : ""}">
+      <img src="${ep.image ? ep.image.medium : ""}" alt="${
+      ep.name
+    } episode image">
       <p>${ep.summary || ""}</p>
     `;
     episodesView.appendChild(card);

@@ -9,25 +9,36 @@
 
   <body>
     <header>
+      <label for="showSearch" class="visually-hidden">Search Shows</label>
       <span>Filtering for</span>
       <input id="showSearch" type="text" />
+
       <span id="showCount"></span>
 
+      <label for="showSelector" class="visually-hidden">Select a Show</label>
       <select id="showSelector"></select>
 
       <button id="backBtn" class="hidden">← All Shows</button>
 
+      <label for="episodeSelector" class="visually-hidden"
+        >Select Episode</label
+      >
       <select id="episodeSelector" class="hidden"></select>
+
+      <label for="episodeSearch" class="visually-hidden">Search Episodes</label>
       <input
         id="episodeSearch"
         class="hidden"
         placeholder="Search episodes..."
       />
+
       <span id="episodeCount" class="hidden"></span>
     </header>
 
-    <div id="showsView"></div>
-    <div id="episodesView" class="hidden"></div>
+    <main>
+      <div id="showsView"></div>
+      <div id="episodesView" class="hidden"></div>
+    </main>
 
     <script src="script.js"></script>
   </body>
