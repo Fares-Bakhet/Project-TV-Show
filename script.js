@@ -32,17 +32,31 @@ function renderShows(shows) {
     const card = document.createElement("div");
     card.className = "episodeCard";
     card.innerHTML = `
-      <h2 class="show-link">${show.name}</h2>
-      <img src="${show.image ? show.image.medium : ""}" class="show-link">
-      <p>${show.summary || ""}</p>
-      <p>
-  <strong>Genres:</strong> ${show.genres.join(", ")}<br>
-  <strong>Status:</strong> ${show.status}<br>
-  <strong>Rating:</strong> ${show.rating?.average ?? "N/A"}<br>
-  <strong>Runtime:</strong> ${show.runtime ?? "N/A"} mins
-</p>
-      <button>View Episodes</button>
-    `;
+  <h2 class="show-link">${show.name}</h2>
+
+  <img
+    src="${show.image ? show.image.medium : ""}"
+    alt="${show.name}"
+    class="show-link"
+  />
+
+  <div class="summary">
+    ${show.summary || "No summary available."}
+  </div>
+
+  <ul class="show-meta">
+    <li><strong>Genres:</strong> ${show.genres.join(", ") || "N/A"}</li>
+    <li><strong>Status:</strong> ${show.status || "N/A"}</li>
+    <li><strong>Rating:</strong> ${
+      show.rating && show.rating.average ? show.rating.average : "N/A"
+    }</li>
+    <li><strong>Runtime:</strong> ${
+      show.runtime ? show.runtime : "N/A"
+    } minutes</li>
+  </ul>
+
+  <button>View Episodes</button>
+`;
 
     card
       .querySelectorAll(".show-link, button")
