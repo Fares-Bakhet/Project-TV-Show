@@ -3,23 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TV Episodes — Level 400</title>
+    <title>TV Shows</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header>
-      <select id="showSelector"></select>
-      <select id="episodeSelector"></select>
-      <input id="episodeSearch" type="text" placeholder="Your search term..." />
+      <input
+        id="episodeSearch"
+        type="text"
+        placeholder="Search shows or episodes..."
+      />
+
+      <select id="episodeSelector" style="display: none"></select>
+
       <span id="episodeCount"></span>
     </header>
 
-    <div id="episodesGrid"></div>
-
-    <footer>
-      Data provided by
-      <a href="https://www.tvmaze.com/api" target="_blank">TVMaze.com</a>
-    </footer>
+    <main id="episodesGrid"></main>
 
     <script src="script.js"></script>
   </body>

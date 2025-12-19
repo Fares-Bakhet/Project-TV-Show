@@ -1,132 +1,143 @@
+const searchInput = document.getElementById("episodeSearch");
 const episodeSelector = document.getElementById("episodeSelector");
-const episodeSearch = document.getElementById("episodeSearch");
 const episodeCount = document.getElementById("episodeCount");
-const showSelector = document.getElementById("showSelector");
 const episodesGrid = document.getElementById("episodesGrid");
 
-let allShowsCache = null;
+let showsCache = null;
 let episodesCache = {};
-let episodes = [];
+let currentShows = [];
+let currentEpisodes = [];
+let viewMode = "shows";
 
 async function loadShows() {
-  if (allShowsCache) {
-    populateShowSelector(allShowsCache);
-    loadEpisodes(allShowsCache[0].id);
+  if (showsCache) {
+    currentShows = showsCache;
+    renderShows(currentShows);
     return;
   }
-  try {
-    const res = await fetch("https://api.tvmaze.com/shows");
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    allShowsCache = await res.json();
-    allShowsCache.sort((a, b) => a.name.localeCompare(b.name));
-    populateShowSelector(allShowsCache);
-    loadEpisodes(allShowsCache[0].id);
-  } catch (err) {
-    console.error(err);
-    episodesGrid.innerHTML =
-      "<p style='color:red;'>Failed to load shows. Please try again later.</p>";
-  }
+  const res = await fetch("https://api.tvmaze.com/shows");
+  showsCache = await res.json();
+  showsCache.sort((a, b) => a.name.localeCompare(b.name));
+  currentShows = showsCache;
+  renderShows(currentShows);
 }
 
-function populateShowSelector(shows) {
-  showSelector.innerHTML = "";
+function renderShows(shows) {
+  viewMode = "shows";
+  episodesGrid.innerHTML = "";
+  episodeSelector.style.display = "none";
+  episodeCount.textContent = `Displaying ${shows.length} shows`;
+
   shows.forEach((show) => {
-    const op = document.createElement("option");
-    op.value = show.id;
-    op.textContent = show.name;
-    showSelector.appendChild(op);
+    const card = document.createElement("div");
+    card.className = "episodeCard";
+    card.innerHTML = `
+      <h2 class="show-link">${show.name}</h2>
+      <img src="${show.image ? show.image.medium : ""}" class="show-link">
+      <p>${show.summary || ""}</p>
+      <p>
+        <strong>Genres:</strong> ${show.genres.join(", ")}<br>
+        <strong>Status:</strong> ${show.status}<br>
+        <strong>Runtime:</strong> ${show.runtime ?? "N/A"} mins
+      </p>
+      <button>View Episodes</button>
+    `;
+
+    card
+      .querySelectorAll(".show-link, button")
+      .forEach((el) =>
+        el.addEventListener("click", () => loadEpisodes(show.id))
+      );
+
+    episodesGrid.appendChild(card);
   });
+
+  addTVMazeCredit();
 }
 
 async function loadEpisodes(showID) {
+  viewMode = "episodes";
+  episodeSelector.style.display = "inline";
+
   if (episodesCache[showID]) {
-    episodes = episodesCache[showID];
-    buildEpisodeSelector();
-    renderEpisodes(episodes);
-    updateCount(episodes.length, episodes.length);
+    currentEpisodes = episodesCache[showID];
+    renderEpisodes(currentEpisodes);
     return;
   }
-  try {
-    const res = await fetch(`https://api.tvmaze.com/shows/${showID}/episodes`);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    episodes = await res.json();
-    episodesCache[showID] = episodes;
-    buildEpisodeSelector();
-    renderEpisodes(episodes);
-    updateCount(episodes.length, episodes.length);
-  } catch (err) {
-    console.error(err);
-    episodesGrid.innerHTML =
-      "<p style='color:red;'>Failed to load episodes. Please try again later.</p>";
-  }
+
+  const res = await fetch(`https://api.tvmaze.com/shows/${showID}/episodes`);
+  const episodes = await res.json();
+  episodesCache[showID] = episodes;
+  currentEpisodes = episodes;
+  renderEpisodes(episodes);
 }
 
-function buildEpisodeSelector() {
+function renderEpisodes(episodes) {
+  episodesGrid.innerHTML = "";
+
+  const backBtn = document.createElement("button");
+  backBtn.textContent = "← Back to Shows";
+  backBtn.onclick = () => renderShows(currentShows);
+  episodesGrid.appendChild(backBtn);
+
   episodeSelector.innerHTML = "";
   episodes.forEach((ep) => {
     const code = `S${String(ep.season).padStart(2, "0")}E${String(
       ep.number
     ).padStart(2, "0")}`;
-    const op = document.createElement("option");
-    op.value = ep.id;
-    op.textContent = `${code} - ${ep.name}`;
-    episodeSelector.appendChild(op);
-  });
-}
+    const opt = document.createElement("option");
+    opt.value = ep.id;
+    opt.textContent = `${code} - ${ep.name}`;
+    episodeSelector.appendChild(opt);
 
-function renderEpisodes(list) {
-  episodesGrid.innerHTML = "";
-  list.forEach((ep) => {
-    const code = `S${String(ep.season).padStart(2, "0")}E${String(
-      ep.number
-    ).padStart(2, "0")}`;
     const card = document.createElement("div");
     card.className = "episodeCard";
     card.innerHTML = `
       <h2>${ep.name} - ${code}</h2>
       <img src="${ep.image ? ep.image.medium : ""}">
       <p>${ep.summary || ""}</p>
-      <p><a href="${ep.url}" target="_blank">View on TVMaze.com</a></p>
+      <a href="${ep.url}" target="_blank">View on TVMaze.com</a>
     `;
     episodesGrid.appendChild(card);
   });
+
+  episodeCount.textContent = `Displaying ${episodes.length} episodes`;
   addTVMazeCredit();
 }
 
-function updateCount(n, total) {
-  episodeCount.textContent = `Displaying ${n}/${total} episodes.`;
-}
+searchInput.addEventListener("input", () => {
+  const txt = searchInput.value.toLowerCase();
+  if (viewMode === "shows") {
+    const filtered = currentShows.filter(
+      (s) =>
+        s.name.toLowerCase().includes(txt) ||
+        (s.summary && s.summary.toLowerCase().includes(txt))
+    );
+    renderShows(filtered);
+  } else {
+    const filtered = currentEpisodes.filter(
+      (e) =>
+        e.name.toLowerCase().includes(txt) ||
+        (e.summary && e.summary.toLowerCase().includes(txt))
+    );
+    renderEpisodes(filtered);
+  }
+});
 
-function filterEpisodes() {
-  const txt = episodeSearch.value.toLowerCase();
-  const filtered = episodes.filter(
-    (ep) =>
-      ep.name.toLowerCase().includes(txt) ||
-      (ep.summary && ep.summary.toLowerCase().includes(txt))
-  );
-  renderEpisodes(filtered);
-  updateCount(filtered.length, episodes.length);
-}
-
-function jumpToEpisode() {
-  const id = episodeSelector.value;
-  const index = episodes.findIndex((ep) => ep.id == id);
-  const card = episodesGrid.children[index];
+episodeSelector.addEventListener("change", () => {
+  const index = currentEpisodes.findIndex((e) => e.id == episodeSelector.value);
+  const card = episodesGrid.children[index + 1];
   if (card) card.scrollIntoView({ behavior: "smooth" });
-}
+});
 
 function addTVMazeCredit() {
   if (!document.getElementById("tvmazeCredit")) {
-    const credit = document.createElement("footer");
-    credit.id = "tvmazeCredit";
-    credit.innerHTML =
+    const footer = document.createElement("footer");
+    footer.id = "tvmazeCredit";
+    footer.innerHTML =
       'Data provided by <a href="https://www.tvmaze.com/api" target="_blank">TVMaze.com</a>';
-    document.body.appendChild(credit);
+    document.body.appendChild(footer);
   }
 }
-
-episodeSearch.addEventListener("input", filterEpisodes);
-episodeSelector.addEventListener("change", jumpToEpisode);
-showSelector.addEventListener("change", (e) => loadEpisodes(e.target.value));
 
 loadShows();
