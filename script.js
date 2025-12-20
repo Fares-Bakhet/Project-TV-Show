@@ -15,10 +15,14 @@ async function loadShows() {
     renderShows(currentShows);
     return;
   }
+
   const res = await fetch("https://api.tvmaze.com/shows");
-  showsCache = await res.json();
-  showsCache.sort((a, b) => a.name.localeCompare(b.name));
-  currentShows = showsCache;
+  const data = await res.json();
+
+  data.sort((a, b) => a.name.localeCompare(b.name));
+  showsCache = data;
+  currentShows = data;
+
   renderShows(currentShows);
 }
 
@@ -31,17 +35,33 @@ function renderShows(shows) {
   shows.forEach((show) => {
     const card = document.createElement("div");
     card.className = "episodeCard";
+
     card.innerHTML = `
-      <h2 class="show-link">${show.name}</h2>
-      <img src="${show.image ? show.image.medium : ""}" class="show-link">
-      <p>${show.summary || ""}</p>
-      <p>
-        <strong>Genres:</strong> ${show.genres.join(", ")}<br>
-        <strong>Status:</strong> ${show.status}<br>
-        <strong>Runtime:</strong> ${show.runtime ?? "N/A"} mins
-      </p>
-      <button>View Episodes</button>
-    `;
+  <h2 class="show-link">${show.name}</h2>
+
+  <img
+    src="${show.image ? show.image.medium : ""}"
+    alt="${show.name}"
+    class="show-link"
+  />
+
+  <div class="summary">
+    ${show.summary || "No summary available."}
+  </div>
+
+  <ul class="show-meta">
+    <li><strong>Genres:</strong> ${show.genres.join(", ") || "N/A"}</li>
+    <li><strong>Status:</strong> ${show.status || "N/A"}</li>
+    <li><strong>Rating:</strong> ${
+      show.rating && show.rating.average ? show.rating.average : "N/A"
+    }</li>
+    <li><strong>Runtime:</strong> ${
+      show.runtime ? show.runtime : "N/A"
+    } minutes</li>
+  </ul>
+
+  <button>View Episodes</button>
+`;
 
     card
       .querySelectorAll(".show-link, button")
@@ -67,6 +87,7 @@ async function loadEpisodes(showID) {
 
   const res = await fetch(`https://api.tvmaze.com/shows/${showID}/episodes`);
   const episodes = await res.json();
+
   episodesCache[showID] = episodes;
   currentEpisodes = episodes;
   renderEpisodes(episodes);
@@ -81,23 +102,28 @@ function renderEpisodes(episodes) {
   episodesGrid.appendChild(backBtn);
 
   episodeSelector.innerHTML = "";
+
   episodes.forEach((ep) => {
     const code = `S${String(ep.season).padStart(2, "0")}E${String(
       ep.number
     ).padStart(2, "0")}`;
-    const opt = document.createElement("option");
-    opt.value = ep.id;
-    opt.textContent = `${code} - ${ep.name}`;
-    episodeSelector.appendChild(opt);
+
+    const option = document.createElement("option");
+    option.value = ep.id;
+    option.textContent = `${code} - ${ep.name}`;
+    episodeSelector.appendChild(option);
 
     const card = document.createElement("div");
     card.className = "episodeCard";
     card.innerHTML = `
       <h2>${ep.name} - ${code}</h2>
-      <img src="${ep.image ? ep.image.medium : ""}">
-      <p>${ep.summary || ""}</p>
-      <a href="${ep.url}" target="_blank">View on TVMaze.com</a>
+      <img src="${ep.image ? ep.image.medium : ""}" alt="${ep.name}" />
+      <div class="summary">
+        ${ep.summary || "No summary available."}
+      </div>
+      <a href="${ep.url}" target="_blank">View on TVMaze</a>
     `;
+
     episodesGrid.appendChild(card);
   });
 
@@ -106,28 +132,37 @@ function renderEpisodes(episodes) {
 }
 
 searchInput.addEventListener("input", () => {
-  const txt = searchInput.value.toLowerCase();
+  const text = searchInput.value.toLowerCase();
+
   if (viewMode === "shows") {
     const filtered = currentShows.filter(
-      (s) =>
-        s.name.toLowerCase().includes(txt) ||
-        (s.summary && s.summary.toLowerCase().includes(txt))
+      (show) =>
+        show.name.toLowerCase().includes(text) ||
+        (show.summary && show.summary.toLowerCase().includes(text)) ||
+        show.genres.join(" ").toLowerCase().includes(text)
     );
+
     renderShows(filtered);
   } else {
     const filtered = currentEpisodes.filter(
-      (e) =>
-        e.name.toLowerCase().includes(txt) ||
-        (e.summary && e.summary.toLowerCase().includes(txt))
+      (ep) =>
+        ep.name.toLowerCase().includes(text) ||
+        (ep.summary && ep.summary.toLowerCase().includes(text))
     );
+
     renderEpisodes(filtered);
   }
 });
 
 episodeSelector.addEventListener("change", () => {
-  const index = currentEpisodes.findIndex((e) => e.id == episodeSelector.value);
+  const index = currentEpisodes.findIndex(
+    (ep) => ep.id == episodeSelector.value
+  );
+
   const card = episodesGrid.children[index + 1];
-  if (card) card.scrollIntoView({ behavior: "smooth" });
+  if (card) {
+    card.scrollIntoView({ behavior: "smooth" });
+  }
 });
 
 function addTVMazeCredit() {
