@@ -115,7 +115,6 @@ function renderEpisodes(episodes) {
 
     const card = document.createElement("div");
     card.className = "episodeCard";
-
     card.innerHTML = `
       <h2>${ep.name} - ${code}</h2>
       <img src="${ep.image ? ep.image.medium : ""}" alt="${ep.name}" />
